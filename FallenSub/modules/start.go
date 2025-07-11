@@ -28,7 +28,7 @@ func start(b *gotgbot.Bot, ctx *ext.Context) error {
 			{
 				{
 					Text: "Update Channel",
-					Url:  "https://t.me/FallenProjects",
+					Url:  "https://t.me/team_secret_backup",
 				},
 				{
 					Text: "Help",
