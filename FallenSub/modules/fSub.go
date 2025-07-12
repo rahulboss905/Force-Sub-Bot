@@ -8,6 +8,19 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
 
+var mutedMessages = make(map[string]int) // Stores message IDs
+
+func saveMutedMessage(chatID int64, userID int64, msgID int) {
+	key := fmt.Sprintf("%d:%d", chatID, userID)
+	mutedMessages[key] = msgID
+}
+
+func getMutedMessage(chatID int64, userID int64) (int, bool) {
+	key := fmt.Sprintf("%d:%d", chatID, userID)
+	msgID, ok := mutedMessages[key]
+	return msgID, ok
+}
+
 func setFSub(b *gotgbot.Bot, ctx *ext.Context) error {
 	if ctx.EffectiveChat.Type == gotgbot.ChatTypePrivate || !isAdmin(ctx.EffectiveChat, ctx.EffectiveUser, b) {
 		_, _ = ctx.EffectiveMessage.Reply(b, "This command is only available in groups and requires admin privileges.", nil)
@@ -18,7 +31,6 @@ func setFSub(b *gotgbot.Bot, ctx *ext.Context) error {
 		_ = db.AddChat(b.Id, ctx.EffectiveChat.Id)
 	}()
 
-	// If the message is a reply to a forwarded message, handle it
 	if repliedMsg := ctx.EffectiveMessage.ReplyToMessage; repliedMsg != nil && repliedMsg.ForwardOrigin != nil {
 		return handleForwardedMessage(ctx, b, repliedMsg)
 	}
@@ -151,6 +163,11 @@ func unMuteMe(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	_ = db.RemoveMuted(chat.Id, user.Id)
+
+	// ✅ Delete old mute message if stored
+	if msgID, ok := getMutedMessage(chat.Id, user.Id); ok {
+		_ = b.DeleteMessage(chat.Id, msgID, nil)
+	}
 
 	_, _ = query.Answer(b, &gotgbot.AnswerCallbackQueryOpts{Text: "You are unMuted now.", ShowAlert: true})
 	_, _, _ = query.Message.EditText(b, "You are now unMuted and can participate in the chat again.", nil)
