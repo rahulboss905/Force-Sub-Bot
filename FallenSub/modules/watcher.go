@@ -20,7 +20,7 @@ var chatMutePermissions = gotgbot.ChatPermissions{
 }
 
 // 🔁 Global warning tracking
-var lastWarningMessage = make(map[int64]int)
+var lastWarningMessage = make(map[int64]int64)
 
 func isUserExempt(ctx *ext.Context, fSub db.FSub) bool {
 	user := ctx.EffectiveUser
