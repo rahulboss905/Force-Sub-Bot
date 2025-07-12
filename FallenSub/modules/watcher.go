@@ -19,6 +19,9 @@ var chatMutePermissions = gotgbot.ChatPermissions{
 	CanSendVoiceNotes:    false,
 }
 
+// 🔁 Global warning tracking
+var lastWarningMessage = make(map[int64]int)
+
 func isUserExempt(ctx *ext.Context, fSub db.FSub) bool {
 	user := ctx.EffectiveUser
 	return fSub.ForceSubChannel == 0 || user.IsBot || user.Id == 777000 || user.Id == 1087968824 || ctx.EffectiveSender.IsAnonymousAdmin()
@@ -40,6 +43,12 @@ func restrictUser(b *gotgbot.Bot, chat *gotgbot.Chat, user *gotgbot.User) error 
 }
 
 func sendJoinChannelMessage(b *gotgbot.Bot, msg *gotgbot.Message, chat *gotgbot.Chat, user *gotgbot.User, inviteLink string) error {
+	// 🧹 Delete previous force-sub warning message
+	if oldMsgID, ok := lastWarningMessage[chat.Id]; ok {
+		_, _ = b.DeleteMessage(chat.Id, int64(oldMsgID), nil)
+	}
+
+	// 🔁 Compose new message
 	text := fmt.Sprintf("🚫 Dear %s,\n\nTo send messages in this group, you must join our channel first. Please click the 'Join Channel' button below to join the channel. After joining, click the 'Unmute Me' button to regain your messaging privileges.\n\nThank you for your cooperation!", user.FirstName)
 	button := gotgbot.InlineKeyboardMarkup{
 		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{{
@@ -53,10 +62,19 @@ func sendJoinChannelMessage(b *gotgbot.Bot, msg *gotgbot.Message, chat *gotgbot.
 			},
 		}},
 	}
-	_, err := msg.Reply(b, text, &gotgbot.SendMessageOpts{ReplyMarkup: button, ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true}})
+
+	// 🔁 Send new message and track its ID
+	sentMsg, err := msg.Reply(b, text, &gotgbot.SendMessageOpts{
+		ReplyMarkup: button,
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+	})
 	if err != nil {
 		return logError(fmt.Sprintf("[fSubWatcher]Error replying to message: %s [chatId: %d]", err, chat.Id), err)
 	}
+
+	lastWarningMessage[chat.Id] = sentMsg.MessageId
 	return nil
 }
 
