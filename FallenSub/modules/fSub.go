@@ -166,8 +166,9 @@ func unMuteMe(b *gotgbot.Bot, ctx *ext.Context) error {
 
 	// ✅ Delete old mute message if stored
 	if msgID, ok := getMutedMessage(chat.Id, user.Id); ok {
-    _, _ = b.DeleteMessage(chat.Id, msgID, nil)  // ✅ CORRECT (2 return values)
+    _, _ = b.DeleteMessage(chat.Id, int64(msgID), nil)
 }
+
 
 
 	_, _ = query.Answer(b, &gotgbot.AnswerCallbackQueryOpts{Text: "You are unMuted now.", ShowAlert: true})
