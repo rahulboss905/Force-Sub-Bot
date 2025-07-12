@@ -8,7 +8,8 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
 
-var mutedMessages = make(map[string]int) // Stores message IDs
+var mutedMessages = make(map[string]int)         // Stores mute messages
+var lastWarningMessage = make(map[int64]int)     // Stores last force-join warning per group
 
 func saveMutedMessage(chatID int64, userID int64, msgID int) {
 	key := fmt.Sprintf("%d:%d", chatID, userID)
@@ -166,10 +167,11 @@ func unMuteMe(b *gotgbot.Bot, ctx *ext.Context) error {
 
 	// ✅ Delete old mute message if stored
 	if msgID, ok := getMutedMessage(chat.Id, user.Id); ok {
-    _, _ = b.DeleteMessage(chat.Id, int64(msgID), nil)
-}
-
-
+		_, err := b.DeleteMessage(chat.Id, int64(msgID), nil)
+		if err != nil {
+			fmt.Println("Failed to delete mute message:", err)
+		}
+	}
 
 	_, _ = query.Answer(b, &gotgbot.AnswerCallbackQueryOpts{Text: "You are unMuted now.", ShowAlert: true})
 	_, _, _ = query.Message.EditText(b, "You are now unMuted and can participate in the chat again.", nil)
