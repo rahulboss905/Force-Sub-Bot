@@ -1,44 +1,49 @@
 package main
 
 import (
+	"log"
 	"net/http"
-	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/modules"
-	"time"
+	"os"
 
 	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/config"
+	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/modules"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
 
 func main() {
-	go func() {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Bot is running!"))
-		})
-		http.ListenAndServe(":10000", nil)
-	}()
+	// Load bot token and webhook URL
+	token := config.Token
+	publicURL := os.Getenv("WEBHOOK_URL") // e.g. https://your-app.onrender.com
 
-	b, err := gotgbot.NewBot(config.Token, nil)
+	b, err := gotgbot.NewBot(token, nil)
 	if err != nil {
-		config.ErrorLog.Fatal("failed to create new bot:", err)
+		log.Fatalf("Failed to create bot: %v", err)
 	}
 
 	updater := ext.NewUpdater(modules.Dispatcher, nil)
-	err = updater.StartPolling(b, &ext.PollingOpts{
-		DropPendingUpdates: true,
-		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
-			Timeout: 9,
-			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: time.Second * 10,
-			},
-		},
-	})
 
+	// Set up HTTP handler
+	mux := http.NewServeMux()
+	updater.Webhook.RegisterHandler(b, mux, "/bot"+b.Token)
+
+	// Start the webhook server
+	go func() {
+		log.Println("Starting webhook server on port 10000...")
+		err := http.ListenAndServe(":10000", mux)
+		if err != nil {
+			log.Fatalf("Failed to start webhook server: %v", err)
+		}
+	}()
+
+	// Register webhook with Telegram
+	_, err = b.SetWebhook(publicURL+"/bot"+b.Token, nil)
 	if err != nil {
-		config.ErrorLog.Fatal("failed to start polling:", err)
+		log.Fatalf("Failed to set webhook: %v", err)
 	}
 
-	config.InfoLog.Println("Bot started as @" + b.Username)
-	_, _ = b.SendMessage(config.LoggerId, "Bot started;", nil)
+	log.Println("Webhook set. Bot is live.")
+	_, _ = b.SendMessage(config.LoggerId, "Bot started with webhook ✔️", nil)
+
 	updater.Idle()
 }
