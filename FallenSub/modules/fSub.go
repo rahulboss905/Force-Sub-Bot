@@ -9,7 +9,8 @@ import (
 )
 
 var mutedMessages = make(map[string]int)         // Stores mute messages
-var lastWarningMessage = make(map[int64]int)     // Stores last force-join warning per group
+var lastWarningMessage = make(map[int64]int64)
+     // Stores last force-join warning per group
 
 func saveMutedMessage(chatID int64, userID int64, msgID int) {
 	key := fmt.Sprintf("%d:%d", chatID, userID)
