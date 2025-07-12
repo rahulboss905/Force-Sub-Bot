@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/modules"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 )
 
 func main() {
+	go func() {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Bot is running!"))
+		})
+		http.ListenAndServe(":10000", nil)
+	}()
+
 	b, err := gotgbot.NewBot(config.Token, nil)
 	if err != nil {
 		config.ErrorLog.Fatal("failed to create new bot:", err)
