@@ -19,9 +19,6 @@ var chatMutePermissions = gotgbot.ChatPermissions{
 	CanSendVoiceNotes:    false,
 }
 
-// 🔁 Global warning tracking
-
-
 func isUserExempt(ctx *ext.Context, fSub db.FSub) bool {
 	user := ctx.EffectiveUser
 	return fSub.ForceSubChannel == 0 || user.IsBot || user.Id == 777000 || user.Id == 1087968824 || ctx.EffectiveSender.IsAnonymousAdmin()
