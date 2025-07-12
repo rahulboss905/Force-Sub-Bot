@@ -9,10 +9,10 @@ import (
 	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/modules"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/webhook"
 )
 
 func main() {
-	// Load bot token and webhook URL
 	token := config.Token
 	publicURL := os.Getenv("WEBHOOK_URL") // e.g. https://your-app.onrender.com
 
@@ -23,11 +23,10 @@ func main() {
 
 	updater := ext.NewUpdater(modules.Dispatcher, nil)
 
-	// Set up HTTP handler
 	mux := http.NewServeMux()
-	updater.Webhook.RegisterHandler(b, mux, "/bot"+b.Token)
+	wh := webhook.New(b, updater, "/bot"+b.Token)
+	mux.Handle("/bot"+b.Token, wh)
 
-	// Start the webhook server
 	go func() {
 		log.Println("Starting webhook server on port 10000...")
 		err := http.ListenAndServe(":10000", mux)
@@ -36,7 +35,6 @@ func main() {
 		}
 	}()
 
-	// Register webhook with Telegram
 	_, err = b.SetWebhook(publicURL+"/bot"+b.Token, nil)
 	if err != nil {
 		log.Fatalf("Failed to set webhook: %v", err)
