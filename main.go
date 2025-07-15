@@ -9,8 +9,7 @@ import (
 	"github.com/Abishnoi69/Force-Sub-Bot/FallenSub/modules"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
-	"github.com/PaulSonOfLars/gotgbot/v2/handlers/extwebhook"
-	"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/webhook"
 )
 
 func main() {
